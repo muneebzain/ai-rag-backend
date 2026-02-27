@@ -1,4 +1,4 @@
-# AI RAG Backend – Production AI System
+# AI RAG Backend
 
 A production-ready Retrieval-Augmented Generation (RAG) backend built with FastAPI and powered by a local Large Language Model.
 
