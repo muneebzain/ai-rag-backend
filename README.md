@@ -29,12 +29,25 @@ POST /ingest
 POST /ask  
 
 ## Example Response
-
 {
-  "answer": "...",
-  "confidence": 0.82,
-  "grounding_score": 0.75,
-  "refused": false
+  "success": true,
+  "data": {
+    "answer": "RAG combines retrieval systems with language models...",
+    "sources": [
+      "Retrieved chunk 1...",
+      "Retrieved chunk 2..."
+    ],
+    "confidence": 0.81,
+    "refused": false
+  },
+  "meta": {
+    "performance": {
+      "embed_ms": 142,
+      "search_ms": 6,
+      "llm_ms": 1203,
+      "total_ms": 1351
+    }
+  }
 }
 
 ## Architecture
