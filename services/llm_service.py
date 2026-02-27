@@ -1,37 +1,59 @@
 import requests
+import json
 
-OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
-CHAT_MODEL = "qwen2.5:7b"
+OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL_NAME = "qwen2.5:7b"
+
 
 def build_prompt(context: str, question: str) -> str:
     return f"""
-You are a precise AI assistant.
-
-Rules:
-- Answer ONLY using the provided context.
-- If information is missing, say:
-"I don't have enough information in the provided context."
-- Do not hallucinate.
+You are a helpful AI assistant.
+Only answer using the provided context.
+If the answer is not in the context, say you do not have enough information.
 
 Context:
 {context}
 
 Question:
 {question}
+
+Answer:
 """
 
+
 def chat(prompt: str) -> str:
-    resp = requests.post(
-        OLLAMA_CHAT_URL,
-        json={
-            "model": CHAT_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False
-        },
-        timeout=60
-    )
+    payload = {
+        "model": MODEL_NAME,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False
+    }
 
-    resp.raise_for_status()
-    data = resp.json()
+    response = requests.post(OLLAMA_URL, json=payload)
+    response.raise_for_status()
 
+    data = response.json()
     return data["message"]["content"]
+
+
+def chat_stream(prompt: str):
+    payload = {
+        "model": MODEL_NAME,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "stream": True
+    }
+
+    with requests.post(OLLAMA_URL, json=payload, stream=True) as response:
+        response.raise_for_status()
+
+        for line in response.iter_lines():
+            if line:
+                data = json.loads(line.decode("utf-8"))
+
+                if "message" in data:
+                    content = data["message"].get("content", "")
+                    if content:
+                        yield content

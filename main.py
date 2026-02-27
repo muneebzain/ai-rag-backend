@@ -7,6 +7,8 @@ from services.chunking import chunk_text
 from services.embed_service import embed_texts
 from services.vector_store import add_chunks, search
 from services.llm_service import chat, build_prompt
+from fastapi.responses import StreamingResponse
+from services.llm_service import chat_stream
 
 app = FastAPI()
 
@@ -256,3 +258,36 @@ def ask(req: AskRequest):
             }
         }
     }
+
+@app.post("/ask-stream")
+def ask_stream(req: AskRequest):
+
+    question = req.question.strip()
+    if not question:
+        return error_response("EMPTY_QUESTION", "Question cannot be empty")
+
+    top_k = max(1, min(req.top_k, 10))
+
+    # Embed question
+    q_vec = embed_texts([question])[0]
+
+    # Retrieve documents
+    results = search(q_vec, top_k=top_k)
+    docs = results.get("documents", [[]])[0]
+
+    # Limit context
+    MAX_CONTEXT_CHARS = 3000
+    context_text = ""
+
+    for d in docs:
+        if len(context_text) + len(d) > MAX_CONTEXT_CHARS:
+            break
+        context_text += d + "\n\n"
+
+    prompt = build_prompt(context_text, question)
+
+    def token_generator():
+        for token in chat_stream(prompt):
+            yield token
+
+    return StreamingResponse(token_generator(), media_type="text/plain")
