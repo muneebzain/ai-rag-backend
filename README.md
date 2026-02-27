@@ -28,7 +28,7 @@ Production-ready Retrieval-Augmented Generation (RAG) backend built with FastAPI
 POST /ingest  
 POST /ask  
 
-## Example Response
+## Example /ask Response
 {
   "success": true,
   "data": {
